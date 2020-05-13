@@ -43,19 +43,19 @@
       <div class="row">
         <div class="col-3" id = "sidebar">
           <div class="btn-group-vertical">
-            <div class='btn-group'>
+            <div class="btn-group">
               <button type="button" class="btn shadow-sm btn-kulright dropdown-toggle" data-toggle="dropdown">Select colour</button>
               <div class="dropdown-menu" id="colour"></div>
             </div>
-            <div class='btn-group'>
+            <div class="btn-group">
               <button type="button" class="btn shadow-sm btn-kulright dropdown-toggle" data-toggle="dropdown">Select shape</button>
               <div class="dropdown-menu" id="shape"></div>
             </div>
-            <div class='btn-group'>
+            <div class="btn-group">
               <button type="button" class="btn shadow-sm btn-kulright dropdown-toggle" data-toggle="dropdown">Select size</button>
               <div class="dropdown-menu" id="size"></div>
             </div>
-            <div class='btn-group'>
+            <div class="btn-group">
               <button type="button" class="btn shadow-sm btn-kulright dropdown-toggle" data-toggle="dropdown">Tailored contexts</button>
               <div class="dropdown-menu" id="ctxt"></div>
             </div>
@@ -66,7 +66,7 @@
               <input type="radio" name="selection" value="click" autocomplete="off" checked> <i class="fas fa-mouse-pointer"></i> Click
             </label>
             <label class="btn btn-danger">
-              <input type="radio" name="selection" value="brush" autocomplete="off"> <i class='fas fa-crop-alt'></i> Select area
+              <input type="radio" name="selection" value="brush" autocomplete="off"> <i class="fas fa-crop-alt"></i> Select area
             </label>
           </div>
           <hr>
@@ -75,21 +75,26 @@
             <button type="button" class="btn shadow-sm btn-secondary" id="showTable"><i class="fas fa-sticky-note"></i> Open frequency table</button>       
           </div>
           <div class="input-group mb-3">
-            <input type="text" class="form-control" style="width:100px" id='findTokensByFeature' placeholder="Features in model" aria-label="Features in model" aria-describedby="search tokens with this feature">
+            <input type="text" class="form-control" style="width:100px" id="findTokensByFeature" placeholder="Features in model" aria-label="Features in model" aria-describedby="search tokens with this feature">
             <div class="input-group-append">
-              <button class="btn btn-secondary" type="button" id='findTokensFeatureBtn'>Search</button>
+              <button class="btn btn-secondary" type="button" id="findTokensFeatureBtn">Search</button>
             </div>
           </div>
           <div class="input-group mb-3">
-            <input type="text" class="form-control" style="width:100px" id='findTokensByContext' placeholder="Context word" aria-label="Context word" aria-describedby="search tokens with this context word">
+            <input type="text" class="form-control" style="width:100px" id="findTokensByContext" placeholder="Context word" aria-label="Context word" aria-describedby="search tokens with this context word">
             <div class="input-group-append">
-              <button class="btn btn-secondary" type="button" id='findTokensContextBtn'>Search</button>
+              <button class="btn btn-secondary" type="button" id="findTokensContextBtn">Search</button>
             </div>
+          </div>
+          <div class= "input-group mb-3" id="tokenTextInput">
+            <label for="tokenChoice"></label>
+            <input type="text" class="form-control" style="width:100px" list="tokenIDs" id="tokenChoice" name="tokenChoice" placeholder = "Token ID" value = ""/>
+            <datalist id="tokenIDs"></datalist>
           </div>
           <hr>
           <div class="btn-group-vertical" id="moveAround">
             <button type="button" class="btn shadow-sm btn-marigreen" id="modelSelect"><i class="fas fa-arrow-alt-circle-up"></i> UP </button>
-            <div class='btn-group'>
+            <div class="btn-group">
               <button type="button" class="btn shadow-sm btn-marigreen dropdown-toggle" data-toggle="dropdown"><i class="fas fa-random"></i> Switch to model</button>
               <div class="dropdown-menu" id="models"></div>
             </div>
@@ -97,10 +102,15 @@
         </div>
         <div class="col-6">
           <div id="concordance" style="width:500px;height:90px;"></div>
-          <div id='svgContainer' ></div>
+          <div id="svgContainer" ></div>
         </div>
         <div class="col-3">
-          <div id='legendContainer'></div>
+          <div class="row" style="height:400px">
+            <div id="legendContainer"></div>
+          </div>
+          <div class="row">
+            <div id="tokenCheckboxes"></div>
+          </div>          
         </div>
       </div>
 
@@ -111,7 +121,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <!-- General d3 (version 4?) release -->
     <script src="js/d3.min.js"></script>
-    <!-- d3 component to deal with arrays (in particular, for 'extent'/'min'/'max'...) -->
+    <!-- d3 component to deal with arrays (in particular, for "extent"/"min"/"max"...) -->
     <script src="js/d3-array.min.js"></script>
     <!-- d3 component to generate axes -->
     <script src="js/d3-axis.min.js"></script>
@@ -130,7 +140,7 @@
     <script src="js/level3.js"></script>
     <script src="js/loadData.js"></script>
     <script>
-    var type = getUrlParameter('type');
+    var type = getUrlParameter("type");
     
     loadData(type = type, files = ["tokens", "variables"]);
     </script>
