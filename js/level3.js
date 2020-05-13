@@ -8,7 +8,10 @@ function execute(datasets, type, alternatives) {
 
   // clear selection of models
   d3.select("#clearSelect")
-    .on("click", () => { clearStorage(tokenSelection, level, type); });
+    .on("click", () => {
+      clearStorage(tokenSelection, level, type);
+      d3.select("#tokenCheckboxes").selectAll("div").remove();
+    });
 
   d3.select("#modelSelect")
     .on("click", function () {
@@ -71,7 +74,6 @@ function execute(datasets, type, alternatives) {
           "value": d
         });
       });
-    console.log(tailoredContexts)
 
     const tailoredNumerals = numerals
       .filter(function (d) {
@@ -136,6 +138,53 @@ function execute(datasets, type, alternatives) {
         )
       .on("click", function () {
         window.open("level3.html" + "?type=" + type + "&model=" + this.value, "_self");
+      });
+
+      d3.select("#tokenIDs").selectAll("option")
+        .data(dataset.map((d) => d["_id"]))
+        .enter()
+        .append("option")
+        .attr("value", d => d);
+
+      $(document).on("change", 'input[name="tokenChoice"]', function (event) {
+        const tokenID = this.value;
+        const tokenIDbis = _.replace(tokenID, /\//g, ":");
+
+        d3.select("#tokenCheckboxes")
+          .append("div").attr("class", "btn-group-toggle")
+          .attr("data-toggle", "buttons")
+          .append("label").attr("class", "btn btn-secondary")
+          .text(tokenID.split("/").splice(2).join("/"))
+          .style("font-size", 5)
+          .append("input").attr("type", "checkbox")
+          .attr("name", "chosenToken")
+          .attr("value", tokenID).attr("placeholder", "tokenID")
+          .property("checked", true).property("active", true)
+        // const newBox = d3.select("#tokenCheckboxes")
+        //   .append("div").attr("class", "form-check")
+        //   .attr("id", tokenIDbis + "-formcheck");
+        // newBox.append("input").attr("class", "form-check-input")
+        //   .attr("name", "chosenToken")
+        //   .attr("type", "checkbox").attr("value", tokenID)
+        //   .attr("id", tokenIDbis + "-checkbox")
+        //   .property("checked", true);
+        // newBox.append("label").attr("class", "form-check-label")
+        //   .attr("for", tokenIDbis + "-checkbox")
+        //   .text(tokenID)
+
+        if (tokenSelection.indexOf(tokenID) === -1) tokenSelection.push(tokenID);
+        updateTokSelection(tokenSelection);
+
+        d3.select(this).property("value", "")
+      });
+
+      $(document).on("change", "input[name='chosenToken']", function () {
+        const tokenID = this.value;
+        console.log(tokenID)
+        _.pull(tokenSelection, tokenID);
+        updateTokSelection(tokenSelection);
+        d3.select(this.parentNode).remove();
+        
       });
 
     // Set up canvas #######################################################################################
