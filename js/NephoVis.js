@@ -1,18 +1,18 @@
 // ################################################################################################
 // set up general variables for all scripts
 const myColors = [
-    "#E16A86",
-    "#50A315",
-    "#9F9400",
-    "#CB7F2F",
-    "#00AC79",
-    "#DA65C3",
-    "#00AAB7",
-    "#009ADE",
-    "#A87BE4",
-    "#000000",
-    "#999999"
-] // colorblind friendly palette, from colorspace
+    "#0072B2", // darkish blue
+    "#009E73", // green
+    "#D55E00", // brick red
+    "#ffd77d", // orangy yellow
+    "#CC79A7", // pink-purple
+    "#F0E442", // bright yellow
+    "#56B4E9", // sky blue
+    "#986042", // brown
+    "#011f4b", // almost black
+    "#345534", //dark green
+    "#696969"] //gray
+    // colorblind friendly palette: six first from "seaborn" (other three may not be so)
 
 // Color, shape, size palettes
 const color = d3.scaleOrdinal(myColors);
@@ -206,7 +206,7 @@ function updateVar(dataset, variable, name, level, type) {
     const variableName = name === "Reset" ? null : name;
     const values = name === "Reset" ? +0 : getValues(dataset, name);
 
-    localStorage.setItem(level + variable + "var-" + type, JSON.stringify(variableName));
+    localStorage.setItem(level + "-" + variable + "var-" + type, JSON.stringify(variableName));
     return ({ "variable": variableName, "values": values });
 }
 
@@ -223,7 +223,7 @@ function clearStorage(selection, level, type) {
 }
 
 function varFromLS(dataset, variable, level, type) {
-    const LS = JSON.parse(localStorage.getItem(level + variable + "var-" + type));
+    const LS = JSON.parse(localStorage.getItem(level + "-" + variable + "var-" + type));
     const values = _.isNull(LS) ? +0 : getValues(dataset, LS);
     return ({
         "variable": LS,
@@ -239,6 +239,7 @@ function listFromLS(variable) {
 function updateSelection(selection, level, type) {
     if (selection.length > 0 && selection.indexOf("undefined") > -1) _.pull(selection, "undefined");
 
+    ["color", "shape", "size"].forEach((variable) => {boldenLegend(variable, level, type)});
     localStorage.setItem(level + "selection-" + type, selection.length > 0 ? JSON.stringify(selection) : JSON.stringify(null));
     // if something is selected everything else is translucent
     d3.selectAll(".dot")
@@ -253,8 +254,25 @@ function updateSelection(selection, level, type) {
 // #####################################################################################################################
 
 // For level 2 & 3: offer different solutions if they exist
+function subsetCoords(datasets, alt, model){
+    const data = datasets[alt];
+    const subset = data.map(d => {
+      const res = {"_id" : d["_id"]};
+      if (typeof model === "string") {
+        res[alt + ".x"] = d[model + ".x"];
+        res[alt + ".y"] = d[model + ".y"];
+      } else {
+          for (let i = 0; i < model.length; i++) {
+              res[model[i] + "-" + alt + ".x"] = d[model[i] + ".x"];
+              res[model[i] + "-" + alt + ".y"] = d[model[i] + ".y"];
+          }
+      }
+      return(res);
+    });
+    return(subset);
+  }
 
-function offerAlternatives(datasets, alternatives, type) {
+function offerAlternatives(datasets, alternatives, model, type) {
     if (d3.keys(datasets).indexOf("tokens") === -1 && !_.isNull(alternatives)) {
         const storageSolution = JSON.parse(localStorage.getItem("solution-" + type));
         const chosenSolution = _.isNull(storageSolution) ? alternatives[0] : storageSolution;
@@ -275,15 +293,49 @@ function offerAlternatives(datasets, alternatives, type) {
         });
 
         localStorage.setItem("solution-" + type, JSON.stringify(chosenSolution));
-        return (datasets[chosenSolution]);
+        const coords = subsetCoords(datasets, alternatives[0], model);
+        for (let i = 1; i < alternatives.length; i++){
+            mergeVariables(coords, subsetCoords(datasets, alternatives[i], model))
+        }
+        return(coords)
 
     } else { // if "tokens remains"
-        return (datasets["tokens"]);
+        return (datasets, "tokens", model);
     }
 }
 
+// function offerAlternatives(datasets, alternatives, type) {
+//     if (d3.keys(datasets).indexOf("tokens") === -1 && !_.isNull(alternatives)) {
+//         const storageSolution = JSON.parse(localStorage.getItem("solution-" + type));
+//         const chosenSolution = _.isNull(storageSolution) ? alternatives[0] : storageSolution;
+//         const alts = d3.select("#moveAround").append("div") // setup the dropdown for the alternatives
+//             .attr("class", "btn-group");
+//         alts.append("button")
+//             .attr("type", "button")
+//             .attr("class", "btn shadow-sm btn-marigreen dropdown-toggle")
+//             .attr("data-toggle", "dropdown")
+//             .html("<i class='fas fa-list-ul'></i> Switch solution");
+//         alts.append("div")
+//             .attr("class", "dropdown-menu")
+//             .attr("id", "solutions");
+//         buildDropdown("solutions", alternatives,
+//         valueFunction = d => d,
+//         textFunction = d => {
+//           return (d === chosenSolution ? "<b>" + d + "</b>" : d);
+//         });
+
+//         localStorage.setItem("solution-" + type, JSON.stringify(chosenSolution));
+//         return (datasets[chosenSolution]);
+
+//     } else { // if "tokens remains"
+//         return (datasets["tokens"]);
+//     }
+// }
+
 function mergeVariables(coordinates, variables) {
-    coordinates.forEach((coordRow) => {_.assign(coordRow, variables.filter(varRow => varRow["_id"] === coordRow["_id"])[0])});
+    coordinates.forEach((coordRow) => {
+        _.assign(coordRow, variables.filter(varRow => varRow["_id"] === coordRow["_id"])[0]);
+    });
 }
 
 // ########################################################################################################################
@@ -310,18 +362,13 @@ function selectionByLegend(colorvar, shapevar, sizevar, level, type, dataset) {
     const sizeSelection = listFromLS(_.join(["sizesel", level, type], "-"));
     ["color", "shape", "size"].forEach(function (x) { boldenLegend(x, level, type) });
     const id = level === "model" ? "_model" : "_id";
-    // const selection = d3.map(dataset, function (d) {
-    //     const hasColor = colorSelection.length > 0 ? colorSelection.indexOf(d[colorvar["variable"]]) !== -1 : true;
-    //     const hasShape = shapeSelection.length > 0 ? shapeSelection.indexOf(d[shapevar["variable"]]) !== -1 : true;
-    //     const hasSize = sizeSelection.length > 0 ? sizeSelection.indexOf(+d[sizevar["variable"]]) !== -1 : true;
-    //     if (hasColor && hasShape && hasSize) return (d[id]);
-    // }).keys();
     const selection = _.uniq(_.map(dataset, function (d) {
         const hasColor = colorSelection.length > 0 ? colorSelection.indexOf(d[colorvar["variable"]]) !== -1 : true;
         const hasShape = shapeSelection.length > 0 ? shapeSelection.indexOf(d[shapevar["variable"]]) !== -1 : true;
         const hasSize = sizeSelection.length > 0 ? sizeSelection.indexOf(+d[sizevar["variable"]]) !== -1 : true;
         if (hasColor && hasShape && hasSize) return (d[id]);
     }));
+    if (colorSelection.length + shapeSelection.length + sizeSelection.length === 0) { _.pullAll(selection, selection); }
     updateSelection(selection, level, type);
 }
 

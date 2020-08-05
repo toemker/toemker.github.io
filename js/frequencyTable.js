@@ -8,10 +8,13 @@ function execute(datasets, type, other_args) {
         return (tokselection.indexOf(d['_id']) !== -1);
     }).map(function (d) {
         return (d[cws_column]);
-    });
+    }).join(';').split(';')
+        .filter((d) => {
+            return(freqdata.map((c) => {return(c.cw); }).indexOf(d)>-1);
+        });
     console.log(cws)
 
-    const mySet = new Set(cws.join(';').split(';'));
+    const mySet = new Set(cws);
 
     const freqcols = freqdata.columns.filter(d => d !== 'cw');
 

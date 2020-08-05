@@ -4,6 +4,10 @@ function execute(datasets, type) {
   const padding = 40;
   const dataset = datasets["model"];
   const level = 'model';
+  const LSselectionIndex = listFromLS("modelselection-" + type + "-groups");
+  LSselectionIndex.filter((d) => {return(d3.keys(localStorage).indexOf("modelselection-" + type + "-group" + d) > -1)});
+  console.log(LSselectionIndex);
+  let selectionIndex = LSselectionIndex.length === 0 ? +0 : _.max(LSselectionIndex);
 
   /// SET UP WORKSPACE ######################################################################################################################
 
@@ -20,8 +24,30 @@ function execute(datasets, type) {
     });
 
   d3.select("#modelSelect").on("click", function () {
-    window.open("level2.html" + "?type=" + type, "_self");
+    localStorage.setItem("modelselection-" + type + "-groupnone", JSON.stringify(modelSelection));
+    window.open("level2.html" + "?type=" + type + "&group=none");
   });
+
+  d3.select("#modelGroup").on("click", function () {
+    LSselectionIndex.filter((d) => {return(d3.keys(localStorage).indexOf("modelselection-" + type + "-group" + d) > -1)});
+    console.log(LSselectionIndex)
+    if (LSselectionIndex.length > 0 && selectionIndex == _.max(LSselectionIndex)) selectionIndex += 1;
+    localStorage.setItem("modelselection-" + type + "-group" + selectionIndex, JSON.stringify(modelSelection));
+    LSselectionIndex.push(selectionIndex);
+    localStorage.setItem("modelselection-" + type + "-groups", JSON.stringify(LSselectionIndex));
+    window.open("level2.html" + "?type=" + type + "&group=" + selectionIndex);
+  });
+
+  d3.select("#model2buttons")
+    .selectAll("button")
+    .data(LSselectionIndex).enter()
+    .append("button").attr("type", "button")
+    .attr("class", "btn shadow-sm btn-marigreen p-2")
+    .attr("id", (d) => {return("level2group" + d); })
+    .style("font-weight", "bold")
+    .text((d)=>{return(d); })
+    .on("click", (d) => {window.open("level2.html" + "?type=" + type + "&group=" + d);});
+
 
   d3.select("#go2index").on("click", function () {
     window.open("index.html", "_self");
@@ -33,6 +59,7 @@ function execute(datasets, type) {
   const soc = nominals.filter(function (d) { return (d.startsWith('soc_')); });
 
   const modelSelection = listFromLS(level + "selection-" + type);
+  d3.select("#numSelected").text(modelSelection.length);
 
   // Set up selection by buttons ###################################################
   
@@ -155,6 +182,7 @@ function execute(datasets, type) {
     })
     .on('click', function (d) {
       resetVariable(type + "-modselectionFromButtons");
+      console.log(modelSelection)
       modelSelection.indexOf(d["_model"]) === -1 ? modelSelection.push(d["_model"]) : _.pull(modelSelection, d["_model"]);
       updateModelSelection(modelSelection);
     });
@@ -265,10 +293,15 @@ function execute(datasets, type) {
       });
       return (filteredDataset);
     });
-    updateModelSelection(_.intersection(...selectedTokens));
+
+    
+    _.pullAll(modelSelection, modelSelection);
+    modelSelection.push(..._.intersection(...selectedTokens));
+    updateModelSelection(modelSelection)
   }
 
   function updateModelSelection(modelSelection) {
+    d3.select("#numSelected").text(modelSelection.length);
     updateSelection(modelSelection, "model", type);
   }
 }
