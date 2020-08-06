@@ -259,12 +259,12 @@ function subsetCoords(datasets, alt, model){
     const subset = data.map(d => {
       const res = {"_id" : d["_id"]};
       if (typeof model === "string") {
-        res[alt + ".x"] = d[model + ".x"];
-        res[alt + ".y"] = d[model + ".y"];
+        res[alt + ".x"] = d[model + ".x"] === undefined ? 0.0 : d[model + ".x"];
+        res[alt + ".y"] = d[model + ".y"] === undefined ? 0.0 : d[model + ".y"];
       } else {
           for (let i = 0; i < model.length; i++) {
-              res[model[i] + "-" + alt + ".x"] = d[model[i] + ".x"];
-              res[model[i] + "-" + alt + ".y"] = d[model[i] + ".y"];
+              res[model[i] + "-" + alt + ".x"] = d[model[i] + ".x"] === undefined ? 0.0 : d[model[i] + ".x"];
+              res[model[i] + "-" + alt + ".y"] = d[model[i] + ".y"] === undefined ? 0.0 : d[model[i] + ".y"];
           }
       }
       return(res);

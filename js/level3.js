@@ -357,15 +357,19 @@ function execute(datasets, type, alternatives) {
     adjustValues(chosenSolution, newX, newY, 1);
   };
   function adjustValues(solution, newX, newY, tduration = 1000) {
-    svg.select("#xaxis").call(xAxis.scale(newX)); // x axis rescaled
-    svg.select("#yaxis").call(yAxis.scale(newY)); // y axis rescaled
+    svg.select("#xaxis").transition().duration(tduration)
+      .call(xAxis.scale(newX)); // x axis rescaled
+    svg.select("#yaxis").transition().duration(tduration)
+      .call(yAxis.scale(newY)); // y axis rescaled
     dot_present
       .transition().duration(tduration)
       .attr("transform", d => {
         return ("translate(" + newX(d[solution + ".x"]) + "," + newY(d[solution + ".y"]) + ")");
       }); // dots repositioned
-    d3.select("#xCenter").attr("x1", newX(0)).attr("x2", newX(0)); // central x rescaled
-    d3.select("#yCenter").attr("y1", newY(0)).attr("y2", newY(0)); // central y rescaled
+    d3.select("#xCenter").transition().duration(tduration)
+      .attr("x1", newX(0)).attr("x2", newX(0)); // central x rescaled
+    d3.select("#yCenter").transition().duration(tduration)
+      .attr("y1", newY(0)).attr("y2", newY(0)); // central y rescaled
     svg.selectAll(".brush").remove();
   }
 

@@ -1,7 +1,7 @@
 function execute(datasets, type, alternatives) {
   const models = datasets["model"];
   const level = "token";
-  const group = getUrlParameter("group");
+  // const group = getUrlParameter("group");
   const tokenSelection = listFromLS(level + "selection-" + type);
 
 
@@ -9,23 +9,23 @@ function execute(datasets, type, alternatives) {
 
   d3.select("h1").html("Level 2 (<em>" + type + "</em>)");
 
-  if (group !== "none") {
-    d3.select("#groupNumber").html("Group " + group)
-      .on("mouseover", function () {
-        d3.select(this).style("color", "red").text("Remove group " + group);
-      })
-      .on("mouseout", function () {
-        d3.select(this).style("color", "black").text("Group " + group);
-      })
-      .on("click", function () {
-        const LSselectionIndex = listFromLS("modelselection-" + type + "-groups");
-        _.pull(LSselectionIndex, parseInt(group));
-        localStorage.setItem("modelselection-" + type + "-groups", JSON.stringify(LSselectionIndex));
-        localStorage.removeItem("modelselection-" + type + "-group" + group);
-        window.close();
-      });
+  // if (group !== "none") {
+  //   d3.select("#groupNumber").html("Group " + group)
+  //     .on("mouseover", function () {
+  //       d3.select(this).style("color", "red").text("Remove group " + group);
+  //     })
+  //     .on("mouseout", function () {
+  //       d3.select(this).style("color", "black").text("Group " + group);
+  //     })
+  //     .on("click", function () {
+  //       const LSselectionIndex = listFromLS("modelselection-" + type + "-groups");
+  //       _.pull(LSselectionIndex, parseInt(group));
+  //       localStorage.setItem("modelselection-" + type + "-groups", JSON.stringify(LSselectionIndex));
+  //       localStorage.removeItem("modelselection-" + type + "-group" + group);
+  //       window.close();
+  //     });
 
-  }
+  // }
   d3.select("#concordance").style("height", "100px");
 
   // Set buttons behaviour ##########################################################
@@ -40,12 +40,14 @@ function execute(datasets, type, alternatives) {
 
   d3.select("#showTable").on("click", function () {
     const params = "width=700,height=700,menubar=no,toolbar=no,location=no,status=no";
-    window.open("cwsTable.html?type=" + type + "&group=" + group, "freqtable", params);
+    window.open("cwsTable.html?type=" + type, "freqtable", params);
+    // window.open("cwsTable.html?type=" + type + "&group=" + group, "freqtable", params);
   });
 
 
   // first info from LocalStorage
-  const modelSelection = listFromLS("modelselection-" + type + "-group" + group);
+  const modelSelection = listFromLS("modelselection-" + type);
+  // const modelSelection = listFromLS("modelselection-" + type + "-group" + group);
 
   if (_.isEmpty(modelSelection)) {
     window.alert("No models found in selection, let's go back to Level 1!");
@@ -55,7 +57,8 @@ function execute(datasets, type, alternatives) {
     while (modelSelection.length > 9) {
       modelSelection.pop();
     }
-    localStorage.setItem("modelselection-" + type + "-group" + group, JSON.stringify(modelSelection));
+    localStorage.setItem("modelselection-" + type, JSON.stringify(modelSelection));
+    // localStorage.setItem("modelselection-" + type + "-group" + group, JSON.stringify(modelSelection));
   }
 
   // Set up that doesn't depend on the solution(s) ################################################################
@@ -158,7 +161,8 @@ function execute(datasets, type, alternatives) {
     updateLegend(colorvar, shapevar, sizevar, padding, level, type, dataset);
   });
   buildDropdown("models", modelSelection).on("click", function () {
-    window.open("level3.html" + "?type=" + type + "&group=" + group + "&model=" + this.value);
+    window.open("level3.html" + "?type=" + type + "&model=" + this.value);
+    // window.open("level3.html" + "?type=" + type + "&group=" + group + "&model=" + this.value);
   });
 
   // Set up canvas #######################################################################################
@@ -183,6 +187,9 @@ function execute(datasets, type, alternatives) {
   // react to selection of brush/click
   $(document).on("change", 'input[name="selection"]', function () {
     if (d3.select(this).attr("value") === "brush") {
+      _.pullAll(tokenSelection, tokenSelection);
+      // tokenSelection = [];
+      updateTokSelection(tokenSelection);
       d3.selectAll(".cell").append("g")
         .attr("transform", "translate(" + padding + ", " + padding + ")")
         .attr("class", "brush")
@@ -191,9 +198,6 @@ function execute(datasets, type, alternatives) {
     } else {
       d3.selectAll(".brush").remove();
     }
-    _.pullAll(tokenSelection, tokenSelection);
-    // tokenSelection = [];
-    updateTokSelection(tokenSelection);
   });
 
   // Set up scales (axes) - coordinates multiplied to get some padding in a way
@@ -241,11 +245,15 @@ function execute(datasets, type, alternatives) {
 
   function adjustValues(solution, newX, newY, tduration = 1500) {
     x = newX, y = newY;
-    svg.selectAll(".xAxis").call(xAxis.scale(newX)); // x axis rescaled
-    svg.selectAll(".yAxis").call(yAxis.scale(newY)); // y axis rescaled
+    svg.selectAll(".xAxis").transition().duration(tduration)
+      .call(xAxis.scale(newX)); // x axis rescaled
+    svg.selectAll(".yAxis").transition().duration(tduration)
+      .call(yAxis.scale(newY)); // y axis rescaled
     d3.selectAll("g.cell").each(moveDots);
-    d3.selectAll(".xCenter").attr("x1", newX(0)).attr("x2", newX(0)); // central x rescaled
-    d3.selectAll(".yCenter").attr("y1", newY(0)).attr("y2", newY(0)); // central y rescaled
+    d3.selectAll(".xcenter").transition().duration(tduration)
+      .attr("x1", newX(0)).attr("x2", newX(0)); // central x rescaled
+    d3.selectAll(".ycenter").transition().duration(tduration)
+      .attr("y1", newY(0)).attr("y2", newY(0)); // central y rescaled
     svg.selectAll(".brush").remove();
 
     function moveDots(p) {
@@ -294,7 +302,8 @@ function execute(datasets, type, alternatives) {
         return (d.m.length > 40 ? d.m.substring(0, 37) + "..." : d.m);
       })
       .on("click", function (d) {
-        window.open("level3.html" + "?type=" + type + "&group=" + group + "&model=" + d.m);
+        window.open("level3.html" + "?type=" + type + "&model=" + d.m);
+        // window.open("level3.html" + "?type=" + type + "&group=" + group + "&model=" + d.m);
       })
       .on("mouseover", mouseoverCell)
       .on("mouseout", function () {
